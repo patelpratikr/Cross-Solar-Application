@@ -9,5 +9,7 @@ namespace CrossSolar.Models
         public long KiloWatt { get; set; }
 
         public DateTime DateTime { get; set; }
+
+		public string PanelId { get; set; }
     }
 }

@@ -27,7 +27,8 @@ namespace CrossSolar.Tests.Controller
                 Brand = "Areva",
                 Latitude = 12.345678,
                 Longitude = 98.7655432,
-                Serial = "AAAA1111BBBB2222"
+                Serial = "AAAA1111BBBB2222",
+				Id = 123
             };
 
             // Arrange

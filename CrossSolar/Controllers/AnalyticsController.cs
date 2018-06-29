@@ -7,6 +7,7 @@ using CrossSolar.Models;
 using CrossSolar.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace CrossSolar.Controllers
 {
@@ -24,7 +25,7 @@ namespace CrossSolar.Controllers
         }
 
         // GET panel/XXXX1111YYYY2222/analytics
-        [HttpGet("{banelId}/[controller]")]
+        [HttpGet("{panelId}/[controller]")]
         public async Task<IActionResult> Get([FromRoute] string panelId)
         {
             var panel = await _panelRepository.Query()
@@ -41,7 +42,8 @@ namespace CrossSolar.Controllers
                 {
                     Id = c.Id,
                     KiloWatt = c.KiloWatt,
-                    DateTime = c.DateTime
+                    DateTime = c.DateTime,
+					PanelId = panelId
                 })
             };
 
@@ -52,13 +54,61 @@ namespace CrossSolar.Controllers
         [HttpGet("{panelId}/[controller]/day")]
         public async Task<IActionResult> DayResults([FromRoute] string panelId)
         {
-            var result = new List<OneDayElectricityModel>();
+	        var panel = await _panelRepository.Query()
+		        .FirstOrDefaultAsync(x => x.Serial.Equals(panelId, StringComparison.CurrentCultureIgnoreCase));
 
-            return Ok(result);
+	        if (panel == null) return NotFound();
+
+	        var analytics = await _analyticsRepository.Query()
+		        .Where(x => x.PanelId.Equals(panelId, StringComparison.CurrentCultureIgnoreCase)).ToListAsync();
+
+	        var result = new OneHourElectricityListModel
+	        {
+		        OneHourElectricitys = analytics.Select(c => new OneHourElectricityModel
+		        {
+			        Id = c.Id,
+			        KiloWatt = c.KiloWatt,
+			        DateTime = c.DateTime,
+			        PanelId = panelId
+		        })
+				
+	        };
+
+	        return Ok(result);
         }
 
-        // POST panel/XXXX1111YYYY2222/analytics
-        [HttpPost("{panelId}/[controller]")]
+	    // GET panel/XXXX1111YYYY2222/analytics/day/summary
+	    [HttpGet("{panelId}/[controller]/day/summary")]
+	    public async Task<IActionResult> DaySummary([FromRoute] string panelId)
+	    {
+		    var panel = await _panelRepository.Query()
+			    .FirstOrDefaultAsync(x => x.Serial.Equals(panelId, StringComparison.CurrentCultureIgnoreCase));
+
+		    if (panel == null) return NotFound();
+
+		    var analytics = await _analyticsRepository.Query()
+			    .Where(x => x.PanelId.Equals(panelId, StringComparison.CurrentCultureIgnoreCase)).ToListAsync();
+			
+		    var oneHourElectricitys = analytics.Select(a=>a.DateTime.Date).Distinct();
+			List<OneDayElectricityModel> lstOneDayElectricityModels = new List<OneDayElectricityModel>();
+
+			foreach (var oneHourElectricity in oneHourElectricitys)
+			{
+				lstOneDayElectricityModels.Add(new OneDayElectricityModel()
+				{
+					DateTime = oneHourElectricity,
+					Sum = analytics.Where(a=>a.DateTime.Date == oneHourElectricity).Sum(a => a.KiloWatt),
+					Minimum = analytics.Where(a => a.DateTime.Date == oneHourElectricity).Min(a => a.KiloWatt),
+					Maximum = analytics.Where(a => a.DateTime.Date == oneHourElectricity).Max(a => a.KiloWatt),
+					Average = analytics.Where(a => a.DateTime.Date == oneHourElectricity).Average(a => a.KiloWatt)
+				});
+			};
+
+		    return Ok(lstOneDayElectricityModels);
+	    }
+
+		// POST panel/XXXX1111YYYY2222/analytics
+		[HttpPost("{panelId}/[controller]")]
         public async Task<IActionResult> Post([FromRoute] string panelId, [FromBody] OneHourElectricityModel value)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -76,7 +126,8 @@ namespace CrossSolar.Controllers
             {
                 Id = oneHourElectricityContent.Id,
                 KiloWatt = oneHourElectricityContent.KiloWatt,
-                DateTime = oneHourElectricityContent.DateTime
+                DateTime = oneHourElectricityContent.DateTime,
+				PanelId = panelId
             };
 
             return Created($"panel/{panelId}/analytics/{result.Id}", result);

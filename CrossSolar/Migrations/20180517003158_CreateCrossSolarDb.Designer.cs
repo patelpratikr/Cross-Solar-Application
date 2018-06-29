@@ -12,7 +12,7 @@ namespace CrossSolar.Migrations
 {
     [DbContext(typeof(CrossSolarDbContext))]
     [Migration("20180517003158_CreateCrossSolarDb")]
-    partial class CreateCrossSolarDb
+    public partial class CreateCrossSolarDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

@@ -27,7 +27,8 @@ namespace CrossSolar.Controllers
                 Latitude = value.Latitude,
                 Longitude = value.Longitude,
                 Serial = value.Serial,
-                Brand = value.Brand
+                Brand = value.Brand,
+				Id = value.Id
             };
 
             await _panelRepository.InsertAsync(panel);

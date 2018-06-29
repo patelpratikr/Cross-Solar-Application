@@ -10,7 +10,8 @@ namespace CrossSolar.Domain
 
         public CrossSolarDbContext(DbContextOptions<CrossSolarDbContext> options) : base(options)
         {
-        }
+	        
+		}
 
         public DbSet<Panel> Panels { get; set; }
 
